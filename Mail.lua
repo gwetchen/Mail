@@ -222,10 +222,26 @@ end
 do
 	local TakeInboxMoney, TakeInboxItem, DeleteInboxItem = TakeInboxMoney, TakeInboxItem, DeleteInboxItem -- hack to prevent beancounter from deleting mail
 	function Inbox_Open(i)
-		GetInboxText(i)
-		TakeInboxMoney(i)
-		TakeInboxItem(i)
-		DeleteInboxItem(i)
+		local _, _, sender, subject, money, COD_amount, _, has_item = GetInboxHeaderInfo(i)
+		local inbox_count = GetInboxNumItems()
+		if GetInboxNumItems() < inbox_count then
+			return nil
+		elseif has_item then
+			local itm_name, _, itm_qty, _, _ = GetInboxItem(i)
+			TakeInboxItem(i)
+			DEFAULT_CHAT_FRAME:AddMessage("Received from |cff00ff00"..sender.."|r: "..itm_name.." (x"..itm_qty..")", 1, 1, 0)
+		elseif money > 0 then
+			TakeInboxMoney(i)
+			local _,ix = strfind(subject, "Auction successful: ",1,true)
+			local sub
+			if ix then sub = strsub(subject,ix) end
+			if ix
+			  then DEFAULT_CHAT_FRAME:AddMessage("Sold"..sub..": "..money_str(money), 1, 1, 0)--]]
+			  else DEFAULT_CHAT_FRAME:AddMessage("Received from |cff00ff00"..sender.."|r: "..money_str(money), 1, 1, 0)
+			end
+		else
+			DeleteInboxItem(i)
+		end
 	end
 end
 
@@ -698,6 +714,8 @@ function SendMail_Send()
 	end
 
     SendMail(SendMail_state.to, subject, SendMail_state.body)
+
+	DEFAULT_CHAT_FRAME:AddMessage("Sending mail to |cff00ff00" .. SendMail_state.to .. "|r.", 1, 1, 0)
 
     if getn(SendMail_state.attachments) == 0 then
     	SendMail_sending = false
