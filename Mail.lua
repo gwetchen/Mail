@@ -240,6 +240,7 @@ do
 			  else DEFAULT_CHAT_FRAME:AddMessage("Received from |cff00ff00"..sender.."|r: "..money_str(money), 1, 1, 0)
 			end
 		else
+			GetInboxText(i) -- I believe not doing this breaks the mail indicator? doesnt hurt anyway
 			DeleteInboxItem(i)
 		end
 	end
