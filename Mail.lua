@@ -219,19 +219,30 @@ do
 	end
 end
 
+local function money_str(amount)
+	local gold = floor(abs(amount / 10000))
+	local silver = floor(abs(mod(amount / 100, 100)))
+	local copper = floor(abs(mod(amount, 100)))
+	if gold > 0 then
+		return format("%d gold, %d silver, %d copper", gold, silver, copper)
+	elseif silver > 0 then
+		return format("%d silver, %d copper", silver, copper)
+	else
+		return format("%d copper", copper)
+	end
+end
+
 do
 	local TakeInboxMoney, TakeInboxItem, DeleteInboxItem = TakeInboxMoney, TakeInboxItem, DeleteInboxItem -- hack to prevent beancounter from deleting mail
 	function Inbox_Open(i)
 		local _, _, sender, subject, money, COD_amount, _, has_item = GetInboxHeaderInfo(i)
-		local inbox_count = GetInboxNumItems()
-		if GetInboxNumItems() < inbox_count then
-			return nil
-		elseif has_item then
+
+		GetInboxText(i) 
+		if has_item then
 			local itm_name, _, itm_qty, _, _ = GetInboxItem(i)
-			TakeInboxItem(i)
 			DEFAULT_CHAT_FRAME:AddMessage("Received from |cff00ff00"..sender.."|r: "..itm_name.." (x"..itm_qty..")", 1, 1, 0)
+			TakeInboxItem(i)
 		elseif money > 0 then
-			TakeInboxMoney(i)
 			local _,ix = strfind(subject, "Auction successful: ",1,true)
 			local sub
 			if ix then sub = strsub(subject,ix) end
@@ -239,10 +250,13 @@ do
 			  then DEFAULT_CHAT_FRAME:AddMessage("Sold"..sub..": "..money_str(money), 1, 1, 0)--]]
 			  else DEFAULT_CHAT_FRAME:AddMessage("Received from |cff00ff00"..sender.."|r: "..money_str(money), 1, 1, 0)
 			end
-		else
-			GetInboxText(i) -- I believe not doing this breaks the mail indicator? doesnt hurt anyway
-			DeleteInboxItem(i)
+			TakeInboxMoney(i)
+		else --for safety, dont wanna lose any items
+			TakeInboxItem(i)
+			TakeInboxMoney(i)
 		end
+
+		DeleteInboxItem(i)
 	end
 end
 
